@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, PlayCircle } from 'lucide-react';
 
-const API_KEY = "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA";
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA";
 
 // MOCK_VIDEOS explicitly restricted to the 3 channels.
 // This is REQUIRED because the YouTube API key is throwing a 429 Quota Exceeded error.

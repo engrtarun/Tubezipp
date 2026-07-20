@@ -7,6 +7,9 @@ function SummaryTranscriptTabs({ videoUrl }) {
   const [transcript, setTranscript] = useState(null);
   const [summary, setSummary] = useState(null);
   const [translatedTranscript, setTranslatedTranscript] = useState(null);
+  const [summaryLanguage, setSummaryLanguage] = useState('Original Language');
+  const [translatedSummary, setTranslatedSummary] = useState(null);
+  const [isTranslatingSummary, setIsTranslatingSummary] = useState(false);
   
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
@@ -22,7 +25,7 @@ function SummaryTranscriptTabs({ videoUrl }) {
   const [videoDescription, setVideoDescription] = useState('');
 
   const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "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";
-  const YT_API_KEY = "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA"; // Used for fetching description if transcript fails
+  const YT_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA"; // Used for fetching description if transcript fails
 
   useEffect(() => {
     if (!videoUrl) return;
@@ -32,6 +35,9 @@ function SummaryTranscriptTabs({ videoUrl }) {
       setError(null);
       setTranscript(null);
       setSummary(null);
+      setSummaryLanguage('Original Language');
+      setTranslatedSummary(null);
+      setIsTranslatingSummary(false);
       setVideoTitle('');
       setVideoDescription('');
       
@@ -58,39 +64,22 @@ function SummaryTranscriptTabs({ videoUrl }) {
           console.warn("Could not fetch YouTube meta:", ytErr);
         }
 
-        // Fetch YouTube page HTML via raw proxy for transcript
-        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + videoId)}`);
-        if (!response.ok) throw new Error("Failed to fetch video page.");
-        const html = await response.text();
+        // Fetch transcript from the open youtube-transcript.ai service (fully supports CORS and returns clean markdown/txt)
+        const response = await fetch(`https://youtube-transcript.ai/transcript/${videoId}.txt`);
+        if (!response.ok) throw new Error("Failed to fetch transcript from service.");
+        const text = await response.text();
 
-        const match = html.match(/"captionTracks":(\[.*?\])/);
-        if (!match || !match[1]) {
-          return { success: false, transcript: null, title: vTitle, description: vDesc };
+        // Parse and clean the transcript (remove header metadata up to the marker)
+        let parsedTranscript = text;
+        const marker = "## Transcript";
+        const markerIndex = text.indexOf(marker);
+        if (markerIndex !== -1) {
+          parsedTranscript = text.slice(markerIndex + marker.length).trim();
         }
-        
-        const captionTracks = JSON.parse(match[1]);
-        if (!captionTracks.length) {
-          return { success: false, transcript: null, title: vTitle, description: vDesc };
-        }
-        
-        let captionUrl = captionTracks[0].baseUrl;
-        if (!captionUrl.startsWith('http')) captionUrl = 'https://www.youtube.com' + captionUrl;
 
-        // Fetch the XML captions
-        const captionsResponse = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(captionUrl)}`);
-        const xml = await captionsResponse.text();
-        
-        const textRegex = /<text start="([\d.]+)"[^>]*>(.*?)<\/text>/g;
-        let parsedTranscript = "";
-        let m;
-        while ((m = textRegex.exec(xml)) !== null) {
-          const start = parseFloat(m[1]);
-          const text = m[2].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
-          const minutes = Math.floor(start / 60);
-          const seconds = Math.floor(start % 60).toString().padStart(2, '0');
-          parsedTranscript += `[${minutes}:${seconds}] ${text}\n`;
-        }
-        
+        // Clean double-newlines for better readability
+        parsedTranscript = parsedTranscript.replace(/\n\n/g, "\n");
+
         if (!parsedTranscript) {
           return { success: false, transcript: null, title: vTitle, description: vDesc };
         }
@@ -99,6 +88,7 @@ function SummaryTranscriptTabs({ videoUrl }) {
         generateSummary(parsedTranscript, vTitle, vDesc);
         return { success: true, transcript: parsedTranscript, title: vTitle, description: vDesc };
       } catch (err) {
+        console.error("Error loading transcript:", err);
         return { success: false, transcript: null, title: vTitle, description: vDesc };
       } finally {
         setIsLoadingTranscript(false);
@@ -214,6 +204,53 @@ function SummaryTranscriptTabs({ videoUrl }) {
     }
   };
 
+  const handleTranslateSummary = async (e) => {
+    const lang = e.target.value;
+    setSummaryLanguage(lang);
+    
+    if (lang === 'Original Language') {
+      setTranslatedSummary(null);
+      return;
+    }
+
+    if (!summary) return;
+
+    setIsTranslatingSummary(true);
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional translator. Translate the following video summary into ${lang}. Retain all formatting, lists, code blocks, and markdown structure.`
+            },
+            {
+              role: "user",
+              content: summary
+            }
+          ],
+          temperature: 0.3
+        })
+      });
+      
+      const data = await response.json();
+      if (data.choices && data.choices[0]) {
+        setTranslatedSummary(data.choices[0].message.content);
+      }
+    } catch (error) {
+      console.error("Summary translation error:", error);
+      setTranslatedSummary("Error translating the summary.");
+    } finally {
+      setIsTranslatingSummary(false);
+    }
+  };
+
   const handleSendChat = async () => {
     if (!chatQuery.trim() || isChatting) return;
     
@@ -226,7 +263,7 @@ function SummaryTranscriptTabs({ videoUrl }) {
       // Fallback to description if transcript is empty
       const contextContent = transcript ? transcript.substring(0, 12000) : videoDescription.substring(0, 12000);
       
-      const systemContextMessage = `You are an AI learning assistant for the platform Tubezipp. You must answer the user's questions strictly based on the following video details:\nTitle: ${videoTitle}\nDescription/Transcript: ${contextContent}`;
+      const systemContextMessage = `You are an AI learning assistant for the platform Tubezip. You must answer the user's questions strictly based on the following video details:\nTitle: ${videoTitle}\nDescription/Transcript: ${contextContent}`;
       
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -325,23 +362,38 @@ function SummaryTranscriptTabs({ videoUrl }) {
       <div className="p-6 overflow-y-auto flex-1" ref={chatContainerRef}>
         {activeTab === 'summary' ? (
           <div className="flex flex-col h-full space-y-4">
-            <div className="flex justify-end gap-2 mb-2">
-              <button 
-                onClick={() => handleCopy(summary)}
-                disabled={!summary || isLoadingSummary}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded hover:bg-muted/80 transition-colors cursor-pointer group relative disabled:opacity-50"
+            <div className="flex justify-between items-center mb-2 shrink-0">
+              <select 
+                value={summaryLanguage}
+                onChange={handleTranslateSummary}
+                disabled={!summary || isLoadingSummary || isTranslatingSummary}
+                className="bg-muted text-foreground text-xs rounded border border-border px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 cursor-pointer"
               >
-                <Copy size={14} /> Copy
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white px-2 py-1 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Copy Summary</span>
-              </button>
-              <button 
-                onClick={() => handleDownload(summary, "summary.txt")}
-                disabled={!summary || isLoadingSummary}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded hover:bg-muted/80 transition-colors cursor-pointer group relative disabled:opacity-50"
-              >
-                <Download size={14} /> Download .txt
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white px-2 py-1 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Download Summary</span>
-              </button>
+                <option value="Original Language">Original Language</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="Hindi">Hindi</option>
+                <option value="English">English</option>
+              </select>
+              
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleCopy(translatedSummary || summary)}
+                  disabled={!summary || isLoadingSummary || isTranslatingSummary}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded hover:bg-muted/80 transition-colors cursor-pointer group relative disabled:opacity-50"
+                >
+                  <Copy size={14} /> Copy
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white px-2 py-1 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Copy Summary</span>
+                </button>
+                <button 
+                  onClick={() => handleDownload(translatedSummary || summary, "summary.txt")}
+                  disabled={!summary || isLoadingSummary || isTranslatingSummary}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-muted text-foreground rounded hover:bg-muted/80 transition-colors cursor-pointer group relative disabled:opacity-50"
+                >
+                  <Download size={14} /> Download .txt
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white px-2 py-1 text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Download Summary</span>
+                </button>
+              </div>
             </div>
             <div className="prose prose-invert max-w-none text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
               {isLoadingSummary || isLoadingTranscript ? (
@@ -349,8 +401,13 @@ function SummaryTranscriptTabs({ videoUrl }) {
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     <span className="animate-pulse">{isLoadingTranscript ? "Fetching Transcript & Details..." : "Generating AI Summary..."}</span>
                  </div>
+              ) : isTranslatingSummary ? (
+                 <div className="flex flex-col items-center justify-center h-40 gap-4 text-primary">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="animate-pulse">Translating Summary...</span>
+                 </div>
               ) : (
-                <p>{summary || "Waiting for transcript..."}</p>
+                <p>{translatedSummary || summary || "Waiting for transcript..."}</p>
               )}
             </div>
           </div>

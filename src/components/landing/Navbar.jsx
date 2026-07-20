@@ -19,13 +19,13 @@ function Navbar({ onNavigateHome }) {
         >
           <img
             src="/Tubezip1.png"
-            alt="Tubezipp Logo"
+            alt="Tubezip Logo"
             className="h-10 w-10 rounded-lg"
           />
 
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Tubezipp
+              Tubezip
             </h2>
             <p className="text-xs text-gray-500">
               AI Learning

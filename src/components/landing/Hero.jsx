@@ -1,5 +1,6 @@
 import React from "react";
 import Searchbar from "./Searchbar";
+import FeatureCarousel from "./FeatureCarousel";
 
 const Hero = ({ videoUrl, setVideoUrl, handleSubmit }) => {
   return (
@@ -41,27 +42,8 @@ const Hero = ({ videoUrl, setVideoUrl, handleSubmit }) => {
         </div>
 
         {/* Right */}
-
-        <div className="flex flex-1 justify-center">
-
-          <div className="w-full max-w-xl rounded-3xl border border-gray-200 bg-gray-50 p-6 shadow-xl">
-
-            <div className="aspect-video rounded-2xl bg-white shadow-sm"></div>
-
-            <div className="mt-6 space-y-4">
-
-              <div className="h-4 w-2/3 rounded bg-gray-200"></div>
-
-              <div className="h-4 rounded bg-gray-100"></div>
-
-              <div className="h-4 w-5/6 rounded bg-gray-100"></div>
-
-              <div className="h-4 w-1/2 rounded bg-gray-100"></div>
-
-            </div>
-
-          </div>
-
+        <div className="flex flex-1 justify-center w-full">
+          <FeatureCarousel />
         </div>
 
       </div>

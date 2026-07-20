@@ -9,7 +9,7 @@ const steps = [
   {
     no: "02",
     title: "AI Processes Video",
-    desc: "Tubezipp extracts transcripts and understands the content.",
+    desc: "Tubezip extracts transcripts and understands the content.",
   },
   {
     no: "03",
