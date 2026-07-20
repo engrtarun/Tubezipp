@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VideoPlayer from './components/VideoPlayer';
 import SummaryTranscriptTabs from './components/SummaryTranscriptTabs';
 import Suggestions from './components/Suggestions';
-import { Search, Lightbulb } from 'lucide-react';
+import { Search, Lightbulb, AlertCircle } from 'lucide-react';
 import './App.css';
 
 const parseDuration = (isoDuration) => {
@@ -14,24 +14,6 @@ const parseDuration = (isoDuration) => {
   return hours * 3600 + minutes * 60 + seconds;
 };
 
-// MOCK_VIDEOS explicitly restricted to the 3 channels.
-// This is REQUIRED because the YouTube API key is throwing a 429 Quota Exceeded error.
-// Without this, the screen will be completely blank until tomorrow.
-const MOCK_VIDEOS = [
-  { id: 'a-wVHL0lpb0', snippet: { title: 'JavaScript Full Course - Learn JS from Scratch', channelTitle: '@sheryians', thumbnails: { medium: { url: 'https://img.youtube.com/vi/a-wVHL0lpb0/mqdefault.jpg' } } } },
-  { id: 'K3gG3KqD5g8', snippet: { title: 'Complete Backend Development One Shot', channelTitle: '@sheryians', thumbnails: { medium: { url: 'https://img.youtube.com/vi/K3gG3KqD5g8/mqdefault.jpg' } } } },
-  { id: '3qBXWUpoPHo', snippet: { title: 'College Life and Coding - Full RoadMap', channelTitle: '@notyourcollege', thumbnails: { medium: { url: 'https://img.youtube.com/vi/3qBXWUpoPHo/mqdefault.jpg' } } } },
-  { id: '8aGhZQkoFbQ', snippet: { title: 'AI Engineering 101 - Building AI Apps', channelTitle: '@SheryiansAI', thumbnails: { medium: { url: 'https://img.youtube.com/vi/8aGhZQkoFbQ/mqdefault.jpg' } } } },
-  { id: 'xk4_1vCG_38', snippet: { title: 'React JS Masterclass for Beginners', channelTitle: '@sheryians', thumbnails: { medium: { url: 'https://img.youtube.com/vi/xk4_1vCG_38/mqdefault.jpg' } } } },
-  { id: 'B-ytMSuwbf8', snippet: { title: 'How to Learn Programming in College', channelTitle: '@notyourcollege', thumbnails: { medium: { url: 'https://img.youtube.com/vi/B-ytMSuwbf8/mqdefault.jpg' } } } },
-  { id: 'L72fhGm1tfE', snippet: { title: 'Mastering LLMs and Vector Databases', channelTitle: '@SheryiansAI', thumbnails: { medium: { url: 'https://img.youtube.com/vi/L72fhGm1tfE/mqdefault.jpg' } } } },
-  { id: 'qz0aGYrrlhU', snippet: { title: 'Next.js 14 Complete Project Tutorial', channelTitle: '@sheryians', thumbnails: { medium: { url: 'https://img.youtube.com/vi/qz0aGYrrlhU/mqdefault.jpg' } } } },
-  { id: 'v2XjV5bL6pQ', snippet: { title: 'Best Certifications for Students in 2024', channelTitle: '@notyourcollege', thumbnails: { medium: { url: 'https://img.youtube.com/vi/v2XjV5bL6pQ/mqdefault.jpg' } } } },
-  { id: 'O6P86uwfdR0', snippet: { title: 'LangChain and OpenAI Full Course', channelTitle: '@SheryiansAI', thumbnails: { medium: { url: 'https://img.youtube.com/vi/O6P86uwfdR0/mqdefault.jpg' } } } },
-  { id: 'dGcsHMXbSOA', snippet: { title: 'CSS Grid & Flexbox Masterclass', channelTitle: '@sheryians', thumbnails: { medium: { url: 'https://img.youtube.com/vi/dGcsHMXbSOA/mqdefault.jpg' } } } },
-  { id: 'N_QZzDxyf5A', snippet: { title: 'Top 5 AI Projects for Resumes', channelTitle: '@SheryiansAI', thumbnails: { medium: { url: 'https://img.youtube.com/vi/N_QZzDxyf5A/mqdefault.jpg' } } } }
-];
-
 function App() {
   const [videoUrl, setVideoUrl] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
@@ -41,73 +23,105 @@ function App() {
   const [row2Index, setRow2Index] = useState(0);
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [apiError, setApiError] = useState(false);
 
   useEffect(() => {
     const fetchVideos = async () => {
+      const loadFallbackVideos = () => {
+        const fallbackVideos = [
+          { id: '62eeQhh7SrI', snippet: { title: 'Complete Python for AI & ML (Beginner to Pro)', channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/62eeQhh7SrI/mqdefault.jpg' } } } },
+          { id: 'Kdxem4YkrJY', snippet: { title: 'C Language Full Course for Beginners (0 to Advanced) | One Shot + Projects', channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/Kdxem4YkrJY/mqdefault.jpg' } } } },
+          { id: 'FETxgyyu904', snippet: { title: 'Before You Learn Coding, Learn THIS', channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/FETxgyyu904/mqdefault.jpg' } } } },
+          { id: 'Kh1P2DrUyWc', snippet: { title: 'Ask Anything about College | NYC', channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/Kh1P2DrUyWc/mqdefault.jpg' } } } },
+          { id: 'aqAglKcoeio', snippet: { title: "If You're Joining College In 2026, Watch This.", channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/aqAglKcoeio/mqdefault.jpg' } } } },
+          { id: 'Rin0_ahlBRY', snippet: { title: '1st Year? Start Paying Your Own Fees', channelTitle: 'Not Your College', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/Rin0_ahlBRY/mqdefault.jpg' } } } },
+          { id: '_aWbUudZ5Yo', snippet: { title: 'Python Full Course for Beginners to Advanced | 12 Hours Complete Tutorial + Python Book', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/_aWbUudZ5Yo/mqdefault.jpg' } } } },
+          { id: '3LRZRSIh_KE', snippet: { title: 'ReactJS Full Course | ReactJS - Learn Everything | Sheryians Coding School', channelTitle: 'Sheryians Coding School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/3LRZRSIh_KE/mqdefault.jpg' } } } },
+          { id: 'a-wVHL0lpb0', snippet: { title: 'JavaScript Full Course | JavaScript - Learn Everything | Sheryians Coding School', channelTitle: 'Sheryians Coding School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/a-wVHL0lpb0/mqdefault.jpg' } } } },
+          { id: '0IciwnJ6PJI', snippet: { title: 'Complete Backend One Shot | Beginners to Advanced  | Learn Node.js, Express, MongoDB from Scratch', channelTitle: 'Sheryians Coding School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/0IciwnJ6PJI/mqdefault.jpg' } } } },
+          { id: 'eF7HoC-cLRM', snippet: { title: 'Complete Statistics Course for Beginners | Data Science Tutorial | Sheryians AI School', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/eF7HoC-cLRM/mqdefault.jpg' } } } },
+          { id: 'AptmHn3bJoY', snippet: { title: 'KODR 2.0 Is Here: The Bootcamp That Changes Everything!', channelTitle: 'Sheryians Coding School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/AptmHn3bJoY/mqdefault.jpg' } } } },
+          { id: 'Zr0sNpeClV4', snippet: { title: 'Complete MS Excel course for Data Analyst | Job Oriented', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/Zr0sNpeClV4/mqdefault.jpg' } } } },
+          { id: 'Utgwk0r9Zq4', snippet: { title: 'Complete Data Science Course for Beginners | NumPy | Sheryians AI School', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/Utgwk0r9Zq4/mqdefault.jpg' } } } },
+          { id: 'vwncYfhxbR0', snippet: { title: 'Generative AI Full Course (Part 1 ) | Beginner to Advanced | LangChain, LLMs & Prompt Engineering', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/vwncYfhxbR0/mqdefault.jpg' } } } },
+          { id: 'omGvjpmPDoY', snippet: { title: 'Part 3 - Supervised Learning| Classification Algorithms for Beginners | Sheryians AI School', channelTitle: 'Sheryians AI School', thumbnails: { medium: { url: 'https://i.ytimg.com/vi/omGvjpmPDoY/mqdefault.jpg' } } } }
+        ];
+        setRow1Videos(fallbackVideos.slice(0, 8));
+        setRow2Videos(fallbackVideos.slice(8, 16));
+        setApiError(false);
+        setQuotaExceeded(false);
+      };
+
       try {
-        const API_KEY = "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA";
+        const INVIDIOUS_URL = "https://inv.zoomerville.com";
         const channels = ["@notyourcollege", "@sheryians", "@SheryiansAI"];
         
         const searchPromises = channels.map(channel => 
-          fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${channel}&type=video&key=${API_KEY}`).then(res => res.json())
+          fetch(`${INVIDIOUS_URL}/api/v1/search?q=${channel}`).then(res => res.json())
         );
         const searchResults = await Promise.all(searchPromises);
         
-        let isQuotaHit = false;
-        const videoIdsByChannel = searchResults.map(data => {
-          if (data.error && data.error.code === 429) isQuotaHit = true;
-          return data.items ? data.items.map(item => item.id.videoId) : [];
+        let apiFailed = false;
+        const videosByChannel = searchResults.map(data => {
+          if (!data || data.error || !Array.isArray(data)) {
+            apiFailed = true;
+            return [];
+          }
+          return data.filter(item => item.type === 'video');
         });
         
-        const allVideoIds = videoIdsByChannel.flat().filter(Boolean).join(',');
-        
-        let uniqueVideos = [];
-        
-        if (isQuotaHit || !allVideoIds) {
-          console.warn("YouTube API Quota Exceeded (Error 429). Loading mock backup videos strictly for the 3 allowed channels.");
-          setQuotaExceeded(true);
-          uniqueVideos = MOCK_VIDEOS;
-        } else {
-          const detailsResponse = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${allVideoIds}&key=${API_KEY}`);
-          const detailsData = await detailsResponse.json();
+        if (apiFailed && videosByChannel.flat().length === 0) {
+          console.warn("API failed to return recommendations. Falling back to local data.");
+          loadFallbackVideos();
+          return;
+        }
+
+        const videosMap = new Map();
+        videosByChannel.flat().forEach(video => {
+          if (!video) return;
+          const title = (video.title || "").toLowerCase();
+          const duration = video.lengthSeconds || 0;
           
-          if (detailsData.error && detailsData.error.code === 429) {
-             setQuotaExceeded(true);
-             uniqueVideos = MOCK_VIDEOS;
-          } else {
-            const videosMap = new Map();
-            if (detailsData.items) {
-              detailsData.items.forEach(video => {
-                const title = video.snippet.title.toLowerCase();
-                const description = (video.snippet.description || "").toLowerCase();
-                const duration = parseDuration(video.contentDetails.duration);
-                
-                // Strict Anti-Shorts filtering
-                const isShort = duration < 60 || 
-                                title.includes('shorts') || title.includes('short') ||
-                                description.includes('shorts') || description.includes('short');
-                                
-                if (!isShort) {
-                  videosMap.set(video.id, video);
-                }
-              });
-            }
-            
-            const interleaved = [];
-            const maxLen = Math.max(...videoIdsByChannel.map(arr => arr.length));
-            for (let i = 0; i < maxLen; i++) {
-              for (let c = 0; c < channels.length; c++) {
-                const vidId = videoIdsByChannel[c][i];
-                if (vidId && videosMap.has(vidId)) {
-                  interleaved.push(videosMap.get(vidId));
+          // Strict Anti-Shorts filtering
+          const isShort = duration < 60 || 
+                          title.includes('shorts') || title.includes('short');
+                          
+          if (!isShort) {
+            // Standardize format to match what the UI expects
+            videosMap.set(video.videoId, {
+              id: video.videoId,
+              snippet: {
+                title: video.title,
+                channelTitle: video.author,
+                thumbnails: {
+                  medium: {
+                    url: video.videoThumbnails?.find(t => t.quality === 'medium' || t.quality === 'mqdefault')?.url || video.videoThumbnails?.[0]?.url || `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`
+                  }
                 }
               }
+            });
+          }
+        });
+        
+        const interleaved = [];
+        const maxLen = Math.max(...videosByChannel.map(arr => arr.length));
+        for (let i = 0; i < maxLen; i++) {
+          for (let c = 0; c < channels.length; c++) {
+            const vid = videosByChannel[c][i];
+            if (vid && videosMap.has(vid.videoId)) {
+              interleaved.push(videosMap.get(vid.videoId));
             }
-            
-            uniqueVideos = Array.from(new Set(interleaved));
           }
         }
         
+        const uniqueVideos = Array.from(new Set(interleaved));
+        
+        if (uniqueVideos.length === 0) {
+           console.warn("No valid videos returned after filtering. Falling back to local data.");
+           loadFallbackVideos();
+           return;
+        }
+
         // Split videos evenly between rows
         const mid = Math.ceil(uniqueVideos.length / 2);
         let row1 = uniqueVideos.slice(0, mid);
@@ -117,13 +131,17 @@ function App() {
         const validRow1 = row1.slice(0, row1.length - (row1.length % 4));
         const validRow2 = row2.slice(0, row2.length - (row2.length % 4));
         
-        setRow1Videos(validRow1.length >= 4 ? validRow1 : MOCK_VIDEOS.slice(0, 8));
-        setRow2Videos(validRow2.length >= 4 ? validRow2 : MOCK_VIDEOS.slice(4, 12));
+        if (validRow1.length < 4 || validRow2.length < 4) {
+           loadFallbackVideos();
+           return;
+        }
+
+        setRow1Videos(validRow1);
+        setRow2Videos(validRow2);
         
       } catch (error) {
         console.error("Error fetching recommended videos:", error);
-        setRow1Videos(MOCK_VIDEOS.slice(0, 8));
-        setRow2Videos(MOCK_VIDEOS.slice(4, 12));
+        loadFallbackVideos();
       } finally {
         setIsLoadingVideos(false);
       }
@@ -212,6 +230,8 @@ function App() {
           onClick={() => {
             setIsLoaded(false);
             setVideoUrl('');
+            setRow1Index(0);
+            setRow2Index(0);
           }}
         >
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors">
@@ -246,7 +266,7 @@ function App() {
             <div className="w-full flex flex-col overflow-hidden">
               <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2 font-medium">
                 <Lightbulb size={16} className="text-primary" /> 
-                {quotaExceeded ? "Recommended For You (Offline Backup)" : "Recommended For You"}
+                Recommended For You
               </p>
               
               {isLoadingVideos ? (
@@ -265,25 +285,29 @@ function App() {
                    </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-6 pb-12">
+                <div className="flex flex-col gap-6 pb-12 overflow-hidden w-full">
                   {/* Row 1 Slider */}
-                  <div className="flex gap-4 overflow-hidden w-full relative h-[250px]">
-                    <div 
-                      key={`row1-${row1Index}`} 
-                      className="flex gap-4 absolute inset-0 transition-opacity duration-700 animate-in fade-in fill-mode-forwards"
-                    >
-                      {getVisibleBatch(row1Videos, row1Index, 4).map((video, idx) => renderVideoCard(video, idx))}
+                  {row1Videos.length > 0 && (
+                    <div className="w-full relative h-[250px] overflow-hidden">
+                      <div 
+                        className="flex gap-4 absolute inset-0 transition-transform duration-700 ease-in-out"
+                        style={{ transform: `translateX(-${row1Index * 272}px)` }}
+                      >
+                        {row1Videos.map((video, idx) => renderVideoCard(video, idx))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {/* Row 2 Slider */}
-                  <div className="flex gap-4 overflow-hidden w-full relative h-[250px]">
-                    <div 
-                      key={`row2-${row2Index}`}
-                      className="flex gap-4 absolute inset-0 transition-opacity duration-700 animate-in fade-in fill-mode-forwards"
-                    >
-                      {getVisibleBatch(row2Videos, row2Index, 4).map((video, idx) => renderVideoCard(video, idx))}
+                  {row2Videos.length > 0 && (
+                    <div className="w-full relative h-[250px] overflow-hidden">
+                      <div 
+                        className="flex gap-4 absolute inset-0 transition-transform duration-700 ease-in-out"
+                        style={{ transform: `translateX(-${row2Index * 272}px)` }}
+                      >
+                        {row2Videos.map((video, idx) => renderVideoCard(video, idx))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>

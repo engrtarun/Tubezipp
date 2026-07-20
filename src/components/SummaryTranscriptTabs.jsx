@@ -58,38 +58,40 @@ function SummaryTranscriptTabs({ videoUrl }) {
           console.warn("Could not fetch YouTube meta:", ytErr);
         }
 
-        // Fetch YouTube page HTML via raw proxy for transcript
-        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://www.youtube.com/watch?v=' + videoId)}`);
-        if (!response.ok) throw new Error("Failed to fetch video page.");
-        const html = await response.text();
+        const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const rapidApiResponse = await fetch(`https://youtube-transcript3.p.rapidapi.com/api/transcript-with-url?url=${encodeURIComponent(ytUrl)}&flat_text=true&lang=en`, {
+          method: 'GET',
+          headers: {
+            'x-rapidapi-host': import.meta.env.VITE_RAPIDAPI_HOST || 'youtube-transcript3.p.rapidapi.com',
+            'x-rapidapi-key': import.meta.env.VITE_RAPIDAPI_KEY
+          }
+        });
 
-        const match = html.match(/"captionTracks":(\[.*?\])/);
-        if (!match || !match[1]) {
-          throw new Error("No transcript available for this video.");
+        if (!rapidApiResponse.ok) {
+          throw new Error(`Failed to fetch transcript from RapidAPI: ${rapidApiResponse.status}`);
         }
-        
-        const captionTracks = JSON.parse(match[1]);
-        if (!captionTracks.length) throw new Error("No transcript available.");
-        
-        let captionUrl = captionTracks[0].baseUrl;
-        if (!captionUrl.startsWith('http')) captionUrl = 'https://www.youtube.com' + captionUrl;
 
-        // Fetch the XML captions
-        const captionsResponse = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(captionUrl)}`);
-        const xml = await captionsResponse.text();
+        const rapidApiData = await rapidApiResponse.json();
         
-        const textRegex = /<text start="([\d.]+)"[^>]*>(.*?)<\/text>/g;
+        if (rapidApiData.message && rapidApiData.message.includes('not subscribed')) {
+          throw new Error("You are not subscribed to this RapidAPI. Please subscribe to the free tier.");
+        }
+
         let parsedTranscript = "";
-        let m;
-        while ((m = textRegex.exec(xml)) !== null) {
-          const start = parseFloat(m[1]);
-          const text = m[2].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
-          const minutes = Math.floor(start / 60);
-          const seconds = Math.floor(start % 60).toString().padStart(2, '0');
-          parsedTranscript += `[${minutes}:${seconds}] ${text}\n`;
-        }
         
-        if (!parsedTranscript) throw new Error("Failed to parse transcript.");
+        // Handle response depending on whether it returns flat text or array
+        if (rapidApiData.transcript && typeof rapidApiData.transcript === 'string') {
+          parsedTranscript = rapidApiData.transcript;
+        } else if (Array.isArray(rapidApiData)) {
+          parsedTranscript = rapidApiData.map(item => {
+             const start = parseFloat(item.offset || item.start || 0);
+             const minutes = Math.floor(start / 60);
+             const seconds = Math.floor(start % 60).toString().padStart(2, '0');
+             return `[${minutes}:${seconds}] ${item.text}`;
+          }).join('\n');
+        }
+
+        if (!parsedTranscript) throw new Error("Failed to parse transcript from API response.");
         
         setTranscript(parsedTranscript);
         generateSummary(parsedTranscript, vTitle, vDesc);
