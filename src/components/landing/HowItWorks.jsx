@@ -23,7 +23,7 @@ const HowItWorks = () => {
     <section className="py-24 bg-gray-50">
       <div className="max-w-6xl mx-auto px-6">
 
-        <h2 className="text-center text-4xl font-bold mb-16">
+        <h2 className="text-center text-4xl font-bold text-gray-900 mb-16">
           How it Works
         </h2>
 
@@ -38,7 +38,7 @@ const HowItWorks = () => {
                 {step.no}
               </div>
 
-              <h3 className="text-xl font-semibold mb-3">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
                 {step.title}
               </h3>
 

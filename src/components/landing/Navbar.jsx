@@ -24,7 +24,7 @@ function Navbar() {
         </div>
 
         {/* Desktop Nav */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-8 text-gray-700 md:flex">
           <a href="#">Features</a>
           <a href="#">How It Works</a>
           <a href="#">FAQ</a>

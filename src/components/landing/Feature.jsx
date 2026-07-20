@@ -30,7 +30,7 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-6">
 
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold">
+          <h2 className="text-4xl font-bold text-gray-900">
             Everything you need to learn faster
           </h2>
 
@@ -44,11 +44,11 @@ const Features = () => {
           {features.map((item) => (
             <div
               key={item.title}
-              className="rounded-2xl border p-8 hover:shadow-lg transition"
+              className="rounded-2xl border border-gray-200 p-8 text-gray-900 hover:shadow-lg transition"
             >
               <div className="mb-6">{item.icon}</div>
 
-              <h3 className="text-xl font-semibold mb-3">
+              <h3 className="text-xl font-semibold mb-3 text-gray-900">
                 {item.title}
               </h3>
 
