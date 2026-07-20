@@ -37,9 +37,14 @@ const MOCK_VIDEOS = [
   { id: 'N_QZzDxyf5A', snippet: { title: 'Top 5 AI Projects for Resumes', channelTitle: '@SheryiansAI', thumbnails: { medium: { url: 'https://img.youtube.com/vi/N_QZzDxyf5A/mqdefault.jpg' } } } }
 ];
 
+const getRoutedVideoUrl = () => {
+  const match = window.location.pathname.match(/^\/learn\/([A-Za-z0-9_-]{11})$/);
+  return match ? `https://www.youtube.com/watch?v=${match[1]}` : '';
+};
+
 function App() {
-  const [videoUrl, setVideoUrl] = useState('');
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(() => getRoutedVideoUrl());
+  const [isLoaded, setIsLoaded] = useState(() => Boolean(getRoutedVideoUrl()));
   const [row1Videos, setRow1Videos] = useState([]);
   const [row2Videos, setRow2Videos] = useState([]);
   const [row1Index, setRow1Index] = useState(0);
@@ -154,6 +159,17 @@ function App() {
     return () => clearInterval(intervalId);
   }, [row2Videos.length]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const routedVideoUrl = getRoutedVideoUrl();
+      setVideoUrl(routedVideoUrl);
+      setIsLoaded(Boolean(routedVideoUrl));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const extractVideoId = (url) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -164,7 +180,9 @@ function App() {
     e.preventDefault();
     const videoId = extractVideoId(videoUrl);
     if (videoId) {
+      window.history.pushState({}, '', `/learn/${videoId}`);
       setIsLoaded(true);
+      window.scrollTo({ top: 0 });
     } else {
       alert('Please enter a valid YouTube URL');
     }
@@ -172,10 +190,16 @@ function App() {
 
   const handleSuggest = (url) => {
     setVideoUrl(url);
-    setIsLoaded(true);
+    const videoId = extractVideoId(url);
+    if (videoId) {
+      window.history.pushState({}, '', `/learn/${videoId}`);
+      setIsLoaded(true);
+      window.scrollTo({ top: 0 });
+    }
   };
 
   const handleNavigateHome = (sectionId) => {
+    window.history.pushState({}, '', sectionId ? `/#${sectionId}` : '/');
     setIsLoaded(false);
 
     window.setTimeout(() => {
