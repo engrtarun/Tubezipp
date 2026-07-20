@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VideoPlayer from './components/VideoPlayer';
 import SummaryTranscriptTabs from './components/SummaryTranscriptTabs';
 import Suggestions from './components/Suggestions';
-import { Search, Lightbulb, AlertCircle } from 'lucide-react';
+import { Search, Lightbulb, AlertCircle, Youtube, BookOpen } from 'lucide-react';
 import './App.css';
 
 const parseDuration = (isoDuration) => {
@@ -271,14 +271,35 @@ function App() {
                 
                 <input
                   type="text"
-                  className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm relative z-10 bg-transparent placeholder-transparent"
+                  className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-24 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm relative z-10 bg-transparent placeholder-transparent"
                   placeholder="Paste any YouTube URL to get started..."
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                 />
 
+                <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-4 z-30">
+                  <a 
+                    href="https://www.youtube.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Open YouTube"
+                    className="text-primary hover:scale-110 transition-transform cursor-pointer"
+                  >
+                    <Youtube className="h-6 w-6" />
+                  </a>
+                  <a 
+                    href="https://www.wikipedia.org" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Open Wikipedia"
+                    className="text-primary hover:scale-110 transition-transform cursor-pointer"
+                  >
+                    <BookOpen className="h-5 w-5" />
+                  </a>
+                </div>
+
                 {!videoUrl && (
-                  <div className="absolute inset-y-0 left-12 right-4 flex items-center pointer-events-none overflow-hidden z-0">
+                  <div className="absolute inset-y-0 left-12 right-24 flex items-center pointer-events-none overflow-hidden z-0">
                     <div 
                       key={currentPlaceholder} 
                       className="text-muted-foreground/70 text-lg animate-slide-up-fade"
