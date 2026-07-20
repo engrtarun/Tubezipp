@@ -8,7 +8,7 @@ function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <img
-            src="/Tubezipp1.png"
+            src="/Tubezip1.png"
             alt="Tubezipp Logo"
             className="h-10 w-10 rounded-lg"
           />

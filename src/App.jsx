@@ -211,21 +211,6 @@ function App() {
 
   return (
     <div className="app-container">
-      <header className="flex items-center px-6 py-4 border-b border-border bg-background z-10 shrink-0">
-        <div 
-          className="flex items-center gap-2 cursor-pointer group"
-          onClick={() => {
-            setIsLoaded(false);
-            setVideoUrl('');
-          }}
-        >
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors">
-            <span className="font-bold text-primary-foreground text-sm">TZ</span>
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">Tubezipp</h1>
-        </div>
-      </header>
-
       <main className="main-content">
         {!isLoaded ? (
           <>
