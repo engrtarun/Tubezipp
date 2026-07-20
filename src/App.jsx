@@ -26,9 +26,10 @@ function App() {
   const [apiError, setApiError] = useState(false);
 
   const placeholders = [
-    "[ enter YT url to summarize... ]",
-    "[ paste video link for AI notes... ]",
-    "[ learn faster with any long video... ]"
+    "Paste any YouTube URL to get started...",
+    "Instantly summarize long YouTube videos...",
+    "Generate smart AI notes from lectures...",
+    "Unlock deep insights from any YouTube link..."
   ];
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
 
@@ -69,12 +70,12 @@ function App() {
       try {
         const INVIDIOUS_URL = "https://inv.zoomerville.com";
         const channels = ["@notyourcollege", "@sheryians", "@SheryiansAI"];
-        
-        const searchPromises = channels.map(channel => 
+
+        const searchPromises = channels.map(channel =>
           fetch(`${INVIDIOUS_URL}/api/v1/search?q=${channel}`).then(res => res.json())
         );
         const searchResults = await Promise.all(searchPromises);
-        
+
         let apiFailed = false;
         const videosByChannel = searchResults.map(data => {
           if (!data || data.error || !Array.isArray(data)) {
@@ -83,7 +84,7 @@ function App() {
           }
           return data.filter(item => item.type === 'video');
         });
-        
+
         if (apiFailed && videosByChannel.flat().length === 0) {
           console.warn("API failed to return recommendations. Falling back to local data.");
           loadFallbackVideos();
@@ -95,11 +96,11 @@ function App() {
           if (!video) return;
           const title = (video.title || "").toLowerCase();
           const duration = video.lengthSeconds || 0;
-          
+
           // Strict Anti-Shorts filtering
-          const isShort = duration < 60 || 
-                          title.includes('shorts') || title.includes('short');
-                          
+          const isShort = duration < 60 ||
+            title.includes('shorts') || title.includes('short');
+
           if (!isShort) {
             // Standardize format to match what the UI expects
             videosMap.set(video.videoId, {
@@ -116,7 +117,7 @@ function App() {
             });
           }
         });
-        
+
         const interleaved = [];
         const maxLen = Math.max(...videosByChannel.map(arr => arr.length));
         for (let i = 0; i < maxLen; i++) {
@@ -127,32 +128,32 @@ function App() {
             }
           }
         }
-        
+
         const uniqueVideos = Array.from(new Set(interleaved));
-        
+
         if (uniqueVideos.length === 0) {
-           console.warn("No valid videos returned after filtering. Falling back to local data.");
-           loadFallbackVideos();
-           return;
+          console.warn("No valid videos returned after filtering. Falling back to local data.");
+          loadFallbackVideos();
+          return;
         }
 
         // Split videos evenly between rows
         const mid = Math.ceil(uniqueVideos.length / 2);
         let row1 = uniqueVideos.slice(0, mid);
         let row2 = uniqueVideos.slice(mid);
-        
+
         // Truncate arrays to a perfect multiple of 4 to prevent overlapping and blank spaces
         const validRow1 = row1.slice(0, row1.length - (row1.length % 4));
         const validRow2 = row2.slice(0, row2.length - (row2.length % 4));
-        
+
         if (validRow1.length < 4 || validRow2.length < 4) {
-           loadFallbackVideos();
-           return;
+          loadFallbackVideos();
+          return;
         }
 
         setRow1Videos(validRow1);
         setRow2Videos(validRow2);
-        
+
       } catch (error) {
         console.error("Error fetching recommended videos:", error);
         loadFallbackVideos();
@@ -203,14 +204,14 @@ function App() {
   };
 
   const renderVideoCard = (video, idx) => (
-    <div 
-      key={video.id + "-" + idx} 
+    <div
+      key={video.id + "-" + idx}
       onClick={() => handleSuggest(`https://www.youtube.com/watch?v=${video.id}`)}
       className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all shadow-sm hover:shadow-md flex flex-col flex-shrink-0 w-64"
     >
       <div className="aspect-video w-full overflow-hidden relative bg-muted">
-        <img 
-          src={video.snippet.thumbnails.medium.url} 
+        <img
+          src={video.snippet.thumbnails.medium.url}
           alt={video.snippet.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -239,7 +240,7 @@ function App() {
   return (
     <div className="app-container">
       <header className="flex items-center px-6 py-4 border-b border-border bg-background z-10 shrink-0">
-        <div 
+        <div
           className="flex items-center gap-2 cursor-pointer group"
           onClick={() => {
             setIsLoaded(false);
@@ -262,6 +263,7 @@ function App() {
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
                 What do you want to learn today?
               </h2>
+
               <form onSubmit={handleSubmit} className="w-full relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
                   <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -270,7 +272,7 @@ function App() {
                 <input
                   type="text"
                   className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm relative z-10 bg-transparent placeholder-transparent"
-                  placeholder="[ enter YT url ]"
+                  placeholder="Paste any YouTube URL to get started..."
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                 />
@@ -290,31 +292,31 @@ function App() {
 
             <div className="w-full flex flex-col overflow-hidden">
               <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2 font-medium">
-                <Lightbulb size={16} className="text-primary" /> 
+                <Lightbulb size={16} className="text-primary" />
                 Recommended For You
               </p>
-              
+
               {isLoadingVideos ? (
                 <div className="flex justify-center items-center py-12">
-                   <div className="animate-pulse flex space-x-4">
-                     <div className="flex-1 space-y-6 py-1">
-                       <div className="h-2 bg-muted rounded"></div>
-                       <div className="space-y-3">
-                         <div className="grid grid-cols-3 gap-4">
-                           <div className="h-2 bg-muted rounded col-span-2"></div>
-                           <div className="h-2 bg-muted rounded col-span-1"></div>
-                         </div>
-                         <div className="h-2 bg-muted rounded"></div>
-                       </div>
-                     </div>
-                   </div>
+                  <div className="animate-pulse flex space-x-4">
+                    <div className="flex-1 space-y-6 py-1">
+                      <div className="h-2 bg-muted rounded"></div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="h-2 bg-muted rounded col-span-2"></div>
+                          <div className="h-2 bg-muted rounded col-span-1"></div>
+                        </div>
+                        <div className="h-2 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-6 pb-12 overflow-hidden w-full">
                   {/* Row 1 Slider */}
                   {row1Videos.length > 0 && (
                     <div className="w-full relative h-[250px] overflow-hidden">
-                      <div 
+                      <div
                         className="flex gap-4 absolute inset-0 transition-transform duration-700 ease-in-out"
                         style={{ transform: `translateX(-${row1Index * 272}px)` }}
                       >
@@ -325,7 +327,7 @@ function App() {
                   {/* Row 2 Slider */}
                   {row2Videos.length > 0 && (
                     <div className="w-full relative h-[250px] overflow-hidden">
-                      <div 
+                      <div
                         className="flex gap-4 absolute inset-0 transition-transform duration-700 ease-in-out"
                         style={{ transform: `translateX(-${row2Index * 272}px)` }}
                       >
@@ -340,26 +342,26 @@ function App() {
         ) : (
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="shrink-0 p-4 border-b border-border bg-background/95 flex justify-center w-full">
-               <form onSubmit={handleSubmit} className="w-full max-w-3xl relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  </div>
-                  <input
-                    type="text"
-                    className="w-full bg-muted/20 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary focus:bg-background transition-all"
-                    placeholder="[ + enter new YT url ]"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                  />
-               </form>
+              <form onSubmit={handleSubmit} className="w-full max-w-3xl relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                </div>
+                <input
+                  type="text"
+                  className="w-full bg-muted/20 border border-border rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary focus:bg-background transition-all"
+                  placeholder="[ + enter new YT url ]"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                />
+              </form>
             </div>
 
             <div className="content-scrollable">
               <div className="video-section">
-                <VideoPlayer url={videoUrl} extractVideoId={extractVideoId} /> 
+                <VideoPlayer url={videoUrl} extractVideoId={extractVideoId} />
                 <Suggestions activeVideoId={extractVideoId(videoUrl)} />
               </div>
-              
+
               <div className="notes-section">
                 <SummaryTranscriptTabs videoUrl={videoUrl} />
               </div>
