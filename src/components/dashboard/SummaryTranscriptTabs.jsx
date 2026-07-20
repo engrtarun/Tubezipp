@@ -65,11 +65,13 @@ function SummaryTranscriptTabs({ videoUrl }) {
 
         const match = html.match(/"captionTracks":(\[.*?\])/);
         if (!match || !match[1]) {
-          throw new Error("No transcript available for this video.");
+          return { success: false, transcript: null, title: vTitle, description: vDesc };
         }
         
         const captionTracks = JSON.parse(match[1]);
-        if (!captionTracks.length) throw new Error("No transcript available.");
+        if (!captionTracks.length) {
+          return { success: false, transcript: null, title: vTitle, description: vDesc };
+        }
         
         let captionUrl = captionTracks[0].baseUrl;
         if (!captionUrl.startsWith('http')) captionUrl = 'https://www.youtube.com' + captionUrl;
@@ -89,26 +91,36 @@ function SummaryTranscriptTabs({ videoUrl }) {
           parsedTranscript += `[${minutes}:${seconds}] ${text}\n`;
         }
         
-        if (!parsedTranscript) throw new Error("Failed to parse transcript.");
+        if (!parsedTranscript) {
+          return { success: false, transcript: null, title: vTitle, description: vDesc };
+        }
         
         setTranscript(parsedTranscript);
         generateSummary(parsedTranscript, vTitle, vDesc);
+        return { success: true, transcript: parsedTranscript, title: vTitle, description: vDesc };
       } catch (err) {
-        console.error("Transcript fetch error:", err);
-        setError("Transcript unavailable. Using Video Title & Description for context.");
-        setTranscript("");
-        // Trigger fallback summary generation!
-        if (vTitle || vDesc) {
-          generateSummary("", vTitle, vDesc);
-        } else {
-          setSummary("Could not fetch video details or transcript to generate a summary.");
-        }
+        return { success: false, transcript: null, title: vTitle, description: vDesc };
       } finally {
         setIsLoadingTranscript(false);
       }
     };
 
-    fetchTranscriptAndMeta();
+    const loadTranscript = async () => {
+      const result = await fetchTranscriptAndMeta();
+
+      if (!result.success) {
+        setError("Transcript unavailable. Using Video Title & Description for context.");
+        setTranscript("");
+
+        if (result.title || result.description) {
+          generateSummary("", result.title, result.description);
+        } else {
+          setSummary("Could not fetch video details or transcript to generate a summary.");
+        }
+      }
+    };
+
+    loadTranscript();
   }, [videoUrl]);
 
   const generateSummary = async (transcriptText, titleFallback, descFallback) => {
