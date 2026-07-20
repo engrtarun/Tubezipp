@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import VideoPlayer from './components/VideoPlayer';
-import SummaryTranscriptTabs from './components/SummaryTranscriptTabs';
-import Suggestions from './components/Suggestions';
-import { Search, Lightbulb } from 'lucide-react';
+import VideoPlayer from './components/dashboard/VideoPlayer';
+import SummaryTranscriptTabs from './components/dashboard/SummaryTranscriptTabs';
+import Suggestions from './components/dashboard/Suggestions';
+import { Search } from 'lucide-react';
 import './App.css';
+import Navbar from "./components/landing/Navbar";
+import Hero from "./components/landing/Hero";
+import Features from "./components/landing/Feature";
+import HowItWorks from "./components/landing/HowItWorks";
+import Footer from "./components/landing/Footer";
 
 function App() {
   const [videoUrl, setVideoUrl] = useState('');
@@ -68,77 +73,17 @@ function App() {
 
       <main className="main-content">
         {!isLoaded ? (
-          /* Initial State - Centered Search & Grid */
-          <div className="flex-1 flex flex-col pt-12 md:pt-20 px-4 sm:px-6 bg-background max-w-7xl mx-auto w-full overflow-y-auto">
-            <div className="w-full max-w-3xl mb-12 flex flex-col mx-auto">
-              <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
-                What do you want to learn today?
-              </h2>
-              
-              <form onSubmit={handleSubmit} className="w-full relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                </div>
-                <input
-                  type="text"
-                  className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm"
-                  placeholder="[ + enter YT url ]"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                />
-              </form>
-            </div>
-
-            <div className="w-full flex flex-col">
-              <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2 font-medium">
-                <Lightbulb size={16} className="text-primary" /> Recommended For You
-              </p>
-              
-              {isLoadingVideos ? (
-                <div className="flex justify-center items-center py-12">
-                   <div className="animate-pulse flex space-x-4">
-                     <div className="flex-1 space-y-6 py-1">
-                       <div className="h-2 bg-muted rounded"></div>
-                       <div className="space-y-3">
-                         <div className="grid grid-cols-3 gap-4">
-                           <div className="h-2 bg-muted rounded col-span-2"></div>
-                           <div className="h-2 bg-muted rounded col-span-1"></div>
-                         </div>
-                         <div className="h-2 bg-muted rounded"></div>
-                       </div>
-                     </div>
-                   </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
-                  {recommendedVideos.map((video, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => handleSuggest(`https://www.youtube.com/watch?v=${video.id.videoId}`)}
-                      className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all shadow-sm hover:shadow-md flex flex-col"
-                    >
-                      <div className="aspect-video w-full overflow-hidden relative bg-muted">
-                        <img 
-                          src={video.snippet.thumbnails.medium.url} 
-                          alt={video.snippet.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                      </div>
-                      <div className="p-4 flex flex-col flex-1">
-                        <h3 className="font-semibold text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors text-foreground">
-                          {video.snippet.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-auto">
-                          {video.snippet.channelTitle}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <>
+            <Navbar />
+            <Hero
+              videoUrl={videoUrl}
+              setVideoUrl={setVideoUrl}
+              handleSubmit={handleSubmit}
+            />
+            <Features />
+            <HowItWorks />
+            <Footer />
+          </>
         ) : (
           /* Post-Load State - Split Layout */
           <div className="flex-1 overflow-hidden flex flex-col">
