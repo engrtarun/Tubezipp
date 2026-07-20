@@ -175,6 +175,18 @@ function App() {
     setIsLoaded(true);
   };
 
+  const handleNavigateHome = (sectionId) => {
+    setIsLoaded(false);
+
+    window.setTimeout(() => {
+      if (sectionId) {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 0);
+  };
+
   const renderVideoCard = (video, idx) => (
     <div 
       key={video.id + "-" + idx} 
@@ -225,7 +237,8 @@ function App() {
             <Footer />
           </>
         ) : (
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 flex flex-col bg-white text-gray-900">
+            <Navbar onNavigateHome={handleNavigateHome} />
             <div className="shrink-0 p-4 border-b border-border bg-background/95 flex justify-center w-full">
                <form onSubmit={handleSubmit} className="w-full max-w-3xl relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -251,6 +264,7 @@ function App() {
                 <SummaryTranscriptTabs videoUrl={videoUrl} />
               </div>
             </div>
+            <Footer onNavigateHome={handleNavigateHome} />
           </div>
         )}
       </main>
