@@ -1,0 +1,32 @@
+=========================================================
+🚀 SKIPTUBE (TubeCapsule) - MASTER PLAN & VISION 🚀
+=========================================================
+
+HUM KYA KAR RAHE HAIN? (What are we building?)
+---------------------------------------------------------
+Hum sirf ek normal video link-pasting website nahi bana rahe hain. Hum ek aisi revolutionary platform (SkipTube/TubeCapsule) bana rahe hain jo user ke clicks aur unnecessary navigation ko bilkul khatam kar dega. Ek smart, distraction-free environment jahan learning aur video consumption next level par hogi.
+
+Features jo hum implement karenge:
+1. Smart Notes: Video ki natural language (Hindi/Hinglish) mein clean markdown notes, jahan important terms bold honge aur code blocks alag se highlight honge.
+2. Click-to-Jump Timestamps: Notes ke aage clickable time-tags [12:34] jinpe click karte hi video direct wahan skip ho jayegi. Timeline par cursor ghaseetne ki koi zaroorat nahi!
+3. Distraction-Free Suggestions: YouTube ke clickbait algorithm ko hatakar, AI ke through sirf 3 aisi videos suggest karna jo aapke "Knowledge Gaps" ko fill karein.
+4. Ask the Video (Mindgrasp feature): Ek chatbox jahan aap video se related kuch bhi pooch sakte hain (jaise: "AI ne 15th minute par kaunsa code likha tha?").
+5. 1-Click Export: Notes ko direct Markdown mein copy karne ya Notion mein export karne ka option.
+6. Interactive Dashboard: Supabase Auth ka use karke ek personal library jahan saari purani summarized videos save rahengi.
+
+
+HUM KYON KAR RAHE HAIN? (Why are we doing this?)
+---------------------------------------------------------
+Aaj ke time pe sabse badi problem 'Distraction' aur 'Information Overload' hai. Jab koi kuch seekhne YouTube par jaata hai, toh clickbait aur ad-driven algorithms unka time waste karte hain. 
+Saath hi, lambe tutorials se notes banana aur specific code snippets ya time-frames dhundhna bahut frustrating hota hai. Humara maksad is process ko zero-friction banana hai. Hum chahte hain ki user ka focus sirf 'Learning' par ho, na ki video ko aage-peeche scroll karne mein.
+
+
+HUM KAISE KAR RAHE HAIN? (How are we going to do it?)
+---------------------------------------------------------
+- Frontend: Vite + React + Modern CSS (Vibrant, dark mode, glassmorphism UI) ka use karke ek buttery smooth user interface banayenge jo premium feel de.
+- Authentication & Database: Supabase ka use karke secure login aur users ki history/dashboard maintain karenge.
+- AI Integration: Video analysis, transcript generation aur 'Ask the Video' feature ke liye powerful AI APIs (LLMs) integrate karenge jo natural language process kar sake.
+- State Management & Logic: Custom React Hooks aur Context API ke through timestamps aur video player ko sync karenge, taaki click-to-jump ekdum flawless kaam kare.
+
+Ekdam deep level par hum har component ko modular rakhenge taaki platform scalable rahe aur architecture clear ho. Humara app visually stunning hoga aur functional depth bhi matchless hogi!
+=========================================================
