@@ -21,7 +21,47 @@ function SummaryTranscriptTabs({ videoUrl }) {
   const [videoTitle, setVideoTitle] = useState('');
   const [videoDescription, setVideoDescription] = useState('');
 
-  const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "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";
+  const fetchGroqWithFallback = async (body) => {
+    const keys = [
+      import.meta.env.VITE_GROQ_API_KEY,
+      import.meta.env.VITE_GROQ_API_KEY_2,
+      "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"
+    ].filter(Boolean);
+
+    let lastError;
+    for (const key of keys) {
+      try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${key}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
+        });
+        
+        if (response.status === 429) {
+           console.warn("Groq rate limit exceeded, trying fallback key...");
+           lastError = new Error("Rate limit exceeded");
+           continue;
+        }
+        
+        if (!response.ok) {
+           if (response.status === 401 || response.status === 403) {
+              console.warn("Groq auth error, trying fallback key...");
+              lastError = new Error("Auth error");
+              continue;
+           }
+           throw new Error(`API Error: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError;
+  };
   const YT_API_KEY = "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA"; // Used for fetching description if transcript fails
 
   useEffect(() => {
@@ -121,29 +161,20 @@ function SummaryTranscriptTabs({ videoUrl }) {
         ? "You are an AI assistant that creates concise, structured, and highly readable summaries of video transcripts. Extract key points and conclusions."
         : "You are an AI assistant that creates concise, structured, and highly readable summaries of videos based on their Title and Description.";
 
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            {
-              role: "system",
-              content: systemMessage
-            },
-            {
-              role: "user",
-              content: `Please summarize the following video details:\n\n${context}`
-            }
-          ],
-          temperature: 0.3
-        })
+      const data = await fetchGroqWithFallback({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: systemMessage
+          },
+          {
+            role: "user",
+            content: `Please summarize the following video details:\n\n${context}`
+          }
+        ],
+        temperature: 0.3
       });
-      
-      const data = await response.json();
       if (data.choices && data.choices[0]) {
         setSummary(data.choices[0].message.content);
       }
@@ -170,29 +201,20 @@ function SummaryTranscriptTabs({ videoUrl }) {
     try {
       const truncated = transcript.substring(0, 15000);
       
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional translator. Translate the following transcript into ${lang}. Maintain the timestamps.`
-            },
-            {
-              role: "user",
-              content: truncated
-            }
-          ],
-          temperature: 0.3
-        })
+      const data = await fetchGroqWithFallback({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional translator. Translate the following transcript into ${lang}. Maintain the timestamps.`
+          },
+          {
+            role: "user",
+            content: truncated
+          }
+        ],
+        temperature: 0.3
       });
-      
-      const data = await response.json();
       if (data.choices && data.choices[0]) {
         setTranslatedTranscript(data.choices[0].message.content);
       }
@@ -218,27 +240,18 @@ function SummaryTranscriptTabs({ videoUrl }) {
       
       const systemContextMessage = `You are an AI learning assistant for the platform Tubezipp. You must answer the user's questions strictly based on the following video details:\nTitle: ${videoTitle}\nDescription/Transcript: ${contextContent}`;
       
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            {
-              role: "system",
-              content: systemContextMessage
-            },
-            ...chatMessages.map(m => ({ role: m.role, content: m.content })),
-            { role: "user", content: chatQuery }
-          ],
-          temperature: 0.5
-        })
+      const data = await fetchGroqWithFallback({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: systemContextMessage
+          },
+          ...chatMessages,
+          newMessage
+        ],
+        temperature: 0.7
       });
-      
-      const data = await response.json();
       if (data.choices && data.choices[0]) {
         setChatMessages(prev => [...prev, { role: 'assistant', content: data.choices[0].message.content }]);
       }
