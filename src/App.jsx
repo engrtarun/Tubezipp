@@ -25,6 +25,20 @@ function App() {
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [apiError, setApiError] = useState(false);
 
+  const placeholders = [
+    "[ enter YT url to summarize... ]",
+    "[ paste video link for AI notes... ]",
+    "[ learn faster with any long video... ]"
+  ];
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentPlaceholder(prev => (prev + 1) % placeholders.length);
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     const fetchVideos = async () => {
       const loadFallbackVideos = () => {
@@ -248,18 +262,29 @@ function App() {
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
                 What do you want to learn today?
               </h2>
-              
               <form onSubmit={handleSubmit} className="w-full relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
                   <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 </div>
+                
                 <input
                   type="text"
-                  className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm"
-                  placeholder="[ + enter YT url ]"
+                  className="w-full bg-muted/30 border-2 border-border rounded-2xl py-4 pl-12 pr-4 text-lg focus:outline-none focus:border-primary focus:bg-background transition-all shadow-sm relative z-10 bg-transparent placeholder-transparent"
+                  placeholder="[ enter YT url ]"
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                 />
+
+                {!videoUrl && (
+                  <div className="absolute inset-y-0 left-12 right-4 flex items-center pointer-events-none overflow-hidden z-0">
+                    <div 
+                      key={currentPlaceholder} 
+                      className="text-muted-foreground/70 text-lg animate-slide-up-fade"
+                    >
+                      {placeholders[currentPlaceholder]}
+                    </div>
+                  </div>
+                )}
               </form>
             </div>
 
