@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
-    "lucide-react": "^1.25.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "lucide-react": "^0.400.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

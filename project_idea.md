@@ -26,3 +26,6 @@ SkipTube (also known as TubeCapsule) aims to revolutionize how users interact wi
 ### 6. Interactive Dashboard (History Log)
 - **User Authentication**: Integrated with Supabase Auth for secure login.
 - **Personal Library**: A dedicated dashboard where users can access and manage their history of summarized and annotated videos.
+
+
+### 7. user exp
