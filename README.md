@@ -1,5 +1,6 @@
 # Tubezip
 
+**Live Demo:** [tubezipp.netlify.app](https://tubezipp.netlify.app)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19.0-blue.svg?logo=react)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.0-indigo.svg?logo=vite)](https://vitejs.dev/)
