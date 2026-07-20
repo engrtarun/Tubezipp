@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import VideoPlayer from './components/VideoPlayer';
 import SummaryTranscriptTabs from './components/SummaryTranscriptTabs';
 import Suggestions from './components/Suggestions';
@@ -8,6 +8,30 @@ import './App.css';
 function App() {
   const [videoUrl, setVideoUrl] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [recommendedVideos, setRecommendedVideos] = useState([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const API_KEY = "AIzaSyC1kG0545W9KYyHXhlq4YYofb4xmCzCXbA";
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=notyourcollege|sheryians|SheryiansAI&type=video&key=${API_KEY}`);
+        const data = await response.json();
+        if (data.items) {
+          const filteredVideos = data.items.filter(video => {
+            const title = video.snippet.title.toLowerCase();
+            return !title.includes('#shorts') && !title.includes('#short');
+          });
+          setRecommendedVideos(filteredVideos.slice(0, 8));
+        }
+      } catch (error) {
+        console.error("Error fetching recommended videos:", error);
+      } finally {
+        setIsLoadingVideos(false);
+      }
+    };
+    fetchVideos();
+  }, []);
 
   const extractVideoId = (url) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -44,9 +68,9 @@ function App() {
 
       <main className="main-content">
         {!isLoaded ? (
-          /* Initial State - Centered Search */
-          <div className="flex-1 flex flex-col items-center justify-center p-6 bg-background max-w-4xl mx-auto w-full">
-            <div className="w-full max-w-2xl mb-8 flex flex-col items-center">
+          /* Initial State - Centered Search & Grid */
+          <div className="flex-1 flex flex-col pt-12 md:pt-20 px-4 sm:px-6 bg-background max-w-7xl mx-auto w-full overflow-y-auto">
+            <div className="w-full max-w-3xl mb-12 flex flex-col mx-auto">
               <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
                 What do you want to learn today?
               </h2>
@@ -65,21 +89,54 @@ function App() {
               </form>
             </div>
 
-            <div className="flex flex-col items-center w-full max-w-2xl">
-              <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
-                <Lightbulb size={16} /> Suggest Any Study Video
+            <div className="w-full flex flex-col">
+              <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2 font-medium">
+                <Lightbulb size={16} className="text-primary" /> Recommended For You
               </p>
-              <div className="flex flex-wrap justify-center gap-3 w-full">
-                <button onClick={() => handleSuggest('https://www.youtube.com/watch?v=kYxRkO5G2B0')} className="px-4 py-2 bg-muted/50 hover:bg-muted border border-border rounded-full text-sm font-medium transition-colors">
-                  React Hooks Tutorial
-                </button>
-                <button onClick={() => handleSuggest('https://www.youtube.com/watch?v=FjC31R7Xp3M')} className="px-4 py-2 bg-muted/50 hover:bg-muted border border-border rounded-full text-sm font-medium transition-colors">
-                  Machine Learning Basics
-                </button>
-                <button onClick={() => handleSuggest('https://www.youtube.com/watch?v=bMknfKXIFA8')} className="px-4 py-2 bg-muted/50 hover:bg-muted border border-border rounded-full text-sm font-medium transition-colors">
-                  React Course for Beginners
-                </button>
-              </div>
+              
+              {isLoadingVideos ? (
+                <div className="flex justify-center items-center py-12">
+                   <div className="animate-pulse flex space-x-4">
+                     <div className="flex-1 space-y-6 py-1">
+                       <div className="h-2 bg-muted rounded"></div>
+                       <div className="space-y-3">
+                         <div className="grid grid-cols-3 gap-4">
+                           <div className="h-2 bg-muted rounded col-span-2"></div>
+                           <div className="h-2 bg-muted rounded col-span-1"></div>
+                         </div>
+                         <div className="h-2 bg-muted rounded"></div>
+                       </div>
+                     </div>
+                   </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
+                  {recommendedVideos.map((video, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => handleSuggest(`https://www.youtube.com/watch?v=${video.id.videoId}`)}
+                      className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all shadow-sm hover:shadow-md flex flex-col"
+                    >
+                      <div className="aspect-video w-full overflow-hidden relative bg-muted">
+                        <img 
+                          src={video.snippet.thumbnails.medium.url} 
+                          alt={video.snippet.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                      </div>
+                      <div className="p-4 flex flex-col flex-1">
+                        <h3 className="font-semibold text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors text-foreground">
+                          {video.snippet.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-auto">
+                          {video.snippet.channelTitle}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -104,7 +161,7 @@ function App() {
             <div className="content-scrollable">
               <div className="video-section">
                 <VideoPlayer url={videoUrl} extractVideoId={extractVideoId} /> 
-                <Suggestions />
+                <Suggestions relatedVideos={recommendedVideos.slice(0, 4)} />
               </div>
               
               <div className="notes-section">
