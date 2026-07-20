@@ -16,8 +16,8 @@ const Footer = () => {
         </div>
 
         <div className="flex gap-8 text-gray-600">
-          <a href="#">Features</a>
-          <a href="#">How it Works</a>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it Works</a>
           <a href="#">GitHub</a>
         </div>
 

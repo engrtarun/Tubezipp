@@ -25,13 +25,8 @@ function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden items-center gap-8 text-gray-700 md:flex">
-          <a href="#">Features</a>
-          <a href="#">How It Works</a>
-          <a href="#">FAQ</a>
-
-          <button className="text-gray-700">
-            Login
-          </button>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
 
           <button className="rounded-lg bg-black px-5 py-2 text-white">
             Get Started
